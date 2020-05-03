@@ -21,7 +21,12 @@ before '/secure/*' do
 end
 
 get '/' do
-  erb '<a href="/sign_on">New user</a>'
+	erb ""
+end
+
+get '/secure/todolist' do
+#  erb :todo_list
+	erb 'This is <%=session[:identity]%>\'s ToDo List'
 end
 
 get '/sign_on' do
@@ -34,9 +39,16 @@ end
 
 post '/login/attempt' do
   if user_exist?(params['username'])
-    session[:identity] = params['username']
+	if check_password?(params['username'], params['password'])
+	    session[:identity] = params['username']
+	else
+		@error = "Wrong password"
+		halt erb :login_form	
+	end
   else
-    erb 'Unknown username or password'
+#    erb 'Unknown username'
+	@error = "Unknown user"
+	halt erb :login_form	
   end
   where_user_came_from = session[:previous_url] || '/'
   redirect to where_user_came_from
@@ -45,14 +57,17 @@ end
 post '/sign_on' do
   if user_exist?(params['username'])
     session[:previous_url] = request.path
-    @error = "Sorry,  username #{params['username']} already exist" + request.path
+    @error = "Sorry,  username #{params['username']} already exist" 
+#+ request.path
     halt erb :sign_on
+#	erb :sign_on	
   elsif params['userpass']!=params['confirmpass']
     session[:previous_url] = request.path
-    @error = "Sorry, password and confirmation is not match" + request.path
+    @error = "Sorry, password and confirmation is not match" 
+#+ request.path
     halt erb :sign_on
   else
-    add_user(params['username'], params['password'])
+    add_user(params['username'], params['userpass'])
     erb :login_form
   end
 end
